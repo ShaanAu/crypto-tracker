@@ -48,8 +48,6 @@ jobs:
           fi
 
       - name: Generate report
-        env:
-          CRYPTOPANIC_TOKEN: ${{ secrets.CRYPTOPANIC_TOKEN }}
         run: node scripts/generate-report.mjs ${{ steps.type.outputs.type }}
 
       - name: Commit report

@@ -11,7 +11,20 @@ if (!['daily', 'weekly', 'monthly'].includes(type)) {
   process.exit(1)
 }
 
-const CRYPTOPANIC_TOKEN = process.env.CRYPTOPANIC_TOKEN ?? null
+// CoinTelegraph tag names per coin ID
+const CT_TAGS = {
+  'dogecoin':    'dogecoin',
+  'avalanche-2': 'avalanche',
+  'chainlink':   'chainlink',
+  'fetch-ai':    'fetch-ai',
+  'ripple':      'xrp',
+  'sui':         'sui',
+  'bittensor':   'bittensor',
+  'near':        'near-protocol',
+  'bitcoin':     'bitcoin',
+  'ethereum':    'ethereum',
+  'solana':      'solana',
+}
 
 // ── Load data ────────────────────────────────────────────────────────────────
 
@@ -65,31 +78,35 @@ for (const h of holdings) {
 
 const fearGreed = await fetchJson('https://api.alternative.me/fng/?limit=7', 'Fear & Greed')
 
-// ── Fetch news from CryptoPanic (optional) ───────────────────────────────────
+// ── Fetch news from CoinTelegraph RSS (free, no key) ─────────────────────────
+
+function parseRss(xml, max = 3) {
+  const items = []
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g
+  let match
+  while ((match = itemRegex.exec(xml)) !== null && items.length < max) {
+    const block = match[1]
+    const title   = (/<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(block) ?? /<title>(.*?)<\/title>/.exec(block))?.[1]?.trim()
+    const link    = (/<link><!\[CDATA\[(.*?)\]\]><\/link>/.exec(block) ?? /<link>(.*?)<\/link>/.exec(block) ?? /<guid[^>]*>(.*?)<\/guid>/.exec(block))?.[1]?.trim()
+    const pubDate = (/<pubDate>(.*?)<\/pubDate>/.exec(block))?.[1]?.trim()
+    if (title && link) items.push({ title, url: link, published: pubDate ? new Date(pubDate).toISOString().split('T')[0] : '' })
+  }
+  return items
+}
 
 const newsMap = {}
-if (CRYPTOPANIC_TOKEN) {
-  const symbols = holdings.map(h => h.symbol).join(',')
-  const newsData = await fetchJson(
-    `https://cryptopanic.com/api/v1/posts/?auth_token=${CRYPTOPANIC_TOKEN}&currencies=${symbols}&kind=news&public=true&filter=hot`,
-    'CryptoPanic news'
-  )
-  if (newsData?.results) {
-    for (const item of newsData.results) {
-      for (const currency of (item.currencies ?? [])) {
-        const sym = currency.code
-        if (!newsMap[sym]) newsMap[sym] = []
-        if (newsMap[sym].length < 3) {
-          newsMap[sym].push({
-            title: item.title,
-            url: item.url,
-            source: item.source?.title ?? '',
-            sentiment: item.votes?.positive > item.votes?.negative ? '🟢' : item.votes?.negative > item.votes?.positive ? '🔴' : '⚪',
-            published: item.published_at?.split('T')[0] ?? '',
-          })
-        }
-      }
-    }
+for (const h of holdings) {
+  const tag = CT_TAGS[h.id]
+  if (!tag) continue
+  await sleep(500)
+  try {
+    const res = await fetch(`https://cointelegraph.com/rss/tag/${tag}`)
+    if (!res.ok) continue
+    const xml = await res.text()
+    const items = parseRss(xml, 3)
+    if (items.length > 0) newsMap[h.symbol] = items
+  } catch (e) {
+    console.warn(`RSS ${h.symbol}: ${e.message}`)
   }
 }
 
@@ -323,18 +340,14 @@ ${enriched.filter(h => h.pnl != null).sort((a, b) => b.pnl - a.pnl).map(h =>
   `| ${h.symbol} | ${usd(h.costBasisUsd)} | ${usd(h.price)} | ${sign(h.pnl)} | ${pct(h.pnlPct)} |`
 ).join('\n')}
 ` : ''}${Object.keys(newsMap).length > 0 ? `
-## Latest News
+## Latest News _(via CoinTelegraph)_
 
 ${enriched.map(h => {
   const news = newsMap[h.symbol]
   if (!news?.length) return ''
-  return `### ${h.symbol}\n${news.map(n => `- ${n.sentiment} [${n.title}](${n.url}) _(${n.source}, ${n.published})_`).join('\n')}`
+  return `### ${h.symbol}\n${news.map(n => `- [${n.title}](${n.url})${n.published ? ` _(${n.published})_` : ''}`).join('\n')}`
 }).filter(Boolean).join('\n\n')}
-` : CRYPTOPANIC_TOKEN ? '' : `
-## Latest News
-
-_Add a free [CryptoPanic API token](https://cryptopanic.com/developers/api/) as \`CRYPTOPANIC_TOKEN\` in GitHub Actions secrets to enable per-coin news._
-`}
+` : ''}
 ---
 _Prices and sentiment from CoinGecko. Fear & Greed from Alternative.me. Portfolio data from [ShaanAu/crypto-tracker](https://github.com/ShaanAu/crypto-tracker)._
 `
