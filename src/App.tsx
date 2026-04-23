@@ -4,6 +4,7 @@ import { HoldingsTable } from './components/HoldingsTable'
 import { EditHoldingModal } from './components/EditHoldingModal'
 import { PortfolioChart } from './components/PortfolioChart'
 import { AlertsPanel } from './components/AlertsPanel'
+import { PerformanceSummary } from './components/PerformanceSummary'
 import { usePortfolio } from './hooks/usePortfolio'
 import { usePrices } from './hooks/usePrices'
 import { useHistory } from './hooks/useHistory'
@@ -73,12 +74,15 @@ export default function App() {
 
         <div className="min-h-[400px]">
           {tab === 'overview' && (
-            <HoldingsTable
-              holdings={holdings}
-              prices={prices}
-              onEdit={h => setEditTarget(h)}
-              onDelete={removeHolding}
-            />
+            <>
+              <PerformanceSummary holdings={holdings} prices={prices} history={history} />
+              <HoldingsTable
+                holdings={holdings}
+                prices={prices}
+                onEdit={h => setEditTarget(h)}
+                onDelete={removeHolding}
+              />
+            </>
           )}
           {tab === 'chart' && <PortfolioChart history={history} />}
           {tab === 'alerts' && (
