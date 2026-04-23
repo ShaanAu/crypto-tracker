@@ -5,7 +5,8 @@ on:
     - cron: '0 7 * * *'    # daily at 7am UTC
     - cron: '0 7 * * 1'    # weekly on Monday at 7am UTC
     - cron: '0 7 1 * *'    # monthly on the 1st at 7am UTC
-  workflow_dispatch:        # allow manual trigger from GitHub UI
+    - cron: '0 7 23 * *'   # monthly on the 23rd at 7am UTC
+  workflow_dispatch:
     inputs:
       report_type:
         description: 'Report type'
@@ -36,8 +37,8 @@ jobs:
             echo "type=${{ inputs.report_type }}" >> $GITHUB_OUTPUT
           else
             DAY=$(date -u +%u)   # 1=Mon ... 7=Sun
-            DOM=$(date -u +%d)   # day of month
-            if [ "$DOM" = "01" ]; then
+            DOM=$(date -u +%d)   # day of month (01–31)
+            if [ "$DOM" = "01" ] || [ "$DOM" = "23" ]; then
               echo "type=monthly" >> $GITHUB_OUTPUT
             elif [ "$DAY" = "1" ]; then
               echo "type=weekly" >> $GITHUB_OUTPUT
@@ -47,6 +48,8 @@ jobs:
           fi
 
       - name: Generate report
+        env:
+          CRYPTOPANIC_TOKEN: ${{ secrets.CRYPTOPANIC_TOKEN }}
         run: node scripts/generate-report.mjs ${{ steps.type.outputs.type }}
 
       - name: Commit report
