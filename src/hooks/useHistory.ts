@@ -1,36 +1,37 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { HistorySnapshot, PriceMap, Holding } from '../types'
+import { supabase } from '../lib/supabase'
 
-const KEY = 'ct_history'
-const MAX_SNAPSHOTS = 2000
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 
-function load(): HistorySnapshot[] {
-  try {
-    const raw = localStorage.getItem(KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return []
-}
+export function useHistory(userId: string) {
+  const [history, setHistory] = useState<HistorySnapshot[]>([])
 
-export function useHistory() {
-  const [history, setHistory] = useState<HistorySnapshot[]>(load)
+  useEffect(() => {
+    if (!userId) return
+    const since = Date.now() - THIRTY_DAYS_MS
+    supabase
+      .from('history')
+      .select('timestamp, total_value_usd')
+      .eq('user_id', userId)
+      .gte('timestamp', since)
+      .order('timestamp', { ascending: true })
+      .then(({ data }) => {
+        if (data) setHistory(data.map(row => ({
+          timestamp: Number(row.timestamp),
+          totalValueUsd: Number(row.total_value_usd),
+        })))
+      })
+  }, [userId])
 
   const addSnapshot = useCallback((holdings: Holding[], prices: PriceMap) => {
-    const totalValueUsd = holdings.reduce((sum, h) => {
-      const price = prices[h.id]?.usd ?? 0
-      return sum + h.amount * price
-    }, 0)
-
-    if (totalValueUsd === 0) return
+    const totalValueUsd = holdings.reduce((sum, h) => sum + h.amount * (prices[h.id]?.usd ?? 0), 0)
+    if (totalValueUsd === 0 || !userId) return
 
     const snapshot: HistorySnapshot = { timestamp: Date.now(), totalValueUsd }
-
-    setHistory(prev => {
-      const next = [...prev, snapshot].slice(-MAX_SNAPSHOTS)
-      localStorage.setItem(KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
+    supabase.from('history').insert({ user_id: userId, timestamp: snapshot.timestamp, total_value_usd: snapshot.totalValueUsd })
+    setHistory(prev => [...prev, snapshot])
+  }, [userId])
 
   return { history, addSnapshot }
 }
