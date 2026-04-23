@@ -1,94 +1,78 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { PriceAlert, PriceMap } from '../types'
-import { supabase } from '../lib/supabase'
+import { getFile, putFile } from '../lib/github'
 
-export function useAlerts(userId: string) {
+const PATH = 'data/alerts.json'
+
+export function useAlerts() {
   const [alerts, setAlerts] = useState<PriceAlert[]>([])
+  const shaRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!userId) return
-    supabase
-      .from('alerts')
-      .select('*')
-      .eq('user_id', userId)
-      .then(({ data }) => {
-        if (data) setAlerts(data.map(row => ({
-          id: row.id,
-          coinId: row.coin_id,
-          symbol: row.symbol,
-          direction: row.direction,
-          targetPrice: Number(row.target_price),
-          enabled: row.enabled,
-          triggered: row.triggered,
-        })))
-      })
-  }, [userId])
-
-  const addAlert = useCallback(async (alert: Omit<PriceAlert, 'id' | 'triggered'>) => {
-    const { data } = await supabase.from('alerts').insert({
-      user_id: userId,
-      coin_id: alert.coinId,
-      symbol: alert.symbol,
-      direction: alert.direction,
-      target_price: alert.targetPrice,
-      enabled: alert.enabled,
-      triggered: false,
-    }).select().single()
-    if (data) {
-      setAlerts(prev => [...prev, {
-        id: data.id,
-        coinId: data.coin_id,
-        symbol: data.symbol,
-        direction: data.direction,
-        targetPrice: Number(data.target_price),
-        enabled: data.enabled,
-        triggered: data.triggered,
-      }])
-    }
-  }, [userId])
-
-  const toggleAlert = useCallback(async (id: string) => {
-    const alert = alerts.find(a => a.id === id)
-    if (!alert) return
-    const updates = { enabled: !alert.enabled, triggered: false }
-    await supabase.from('alerts').update(updates).eq('id', id)
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
-  }, [alerts])
-
-  const removeAlert = useCallback(async (id: string) => {
-    await supabase.from('alerts').delete().eq('id', id)
-    setAlerts(prev => prev.filter(a => a.id !== id))
+    getFile<PriceAlert[]>(PATH).then(({ data, sha }) => {
+      shaRef.current = sha
+      setAlerts(data ?? [])
+    })
   }, [])
 
-  const checkAlerts = useCallback((prices: PriceMap) => {
-    const toUpdate: string[] = []
-    const next = alerts.map(alert => {
-      if (!alert.enabled || alert.triggered) return alert
-      const price = prices[alert.coinId]?.usd
-      if (price == null) return alert
+  const persist = useCallback(async (next: PriceAlert[], message: string) => {
+    const newSha = await putFile(PATH, next, shaRef.current, message)
+    shaRef.current = newSha
+  }, [])
 
-      const triggered =
-        (alert.direction === 'above' && price >= alert.targetPrice) ||
-        (alert.direction === 'below' && price <= alert.targetPrice)
-
-      if (triggered) {
-        toUpdate.push(alert.id)
-        if (Notification.permission === 'granted') {
-          new Notification(`${alert.symbol} price alert`, {
-            body: `${alert.symbol} is ${alert.direction} $${alert.targetPrice} (now $${price.toFixed(4)})`,
-            icon: '/favicon.svg',
-          })
-        }
-        return { ...alert, triggered: true }
-      }
-      return alert
+  const addAlert = useCallback(async (alert: Omit<PriceAlert, 'id' | 'triggered'>) => {
+    setAlerts(prev => {
+      const next = [...prev, { ...alert, id: crypto.randomUUID(), triggered: false }]
+      persist(next, `add alert ${alert.symbol}`)
+      return next
     })
+  }, [persist])
 
-    if (toUpdate.length > 0) {
-      supabase.from('alerts').update({ triggered: true }).in('id', toUpdate)
-      setAlerts(next)
-    }
-  }, [alerts])
+  const toggleAlert = useCallback(async (id: string) => {
+    setAlerts(prev => {
+      const next = prev.map(a => a.id === id ? { ...a, enabled: !a.enabled, triggered: false } : a)
+      persist(next, `toggle alert ${id}`)
+      return next
+    })
+  }, [persist])
+
+  const removeAlert = useCallback(async (id: string) => {
+    setAlerts(prev => {
+      const next = prev.filter(a => a.id !== id)
+      persist(next, `remove alert ${id}`)
+      return next
+    })
+  }, [persist])
+
+  const checkAlerts = useCallback((prices: PriceMap) => {
+    setAlerts(prev => {
+      let changed = false
+      const next = prev.map(alert => {
+        if (!alert.enabled || alert.triggered) return alert
+        const price = prices[alert.coinId]?.usd
+        if (price == null) return alert
+
+        const triggered =
+          (alert.direction === 'above' && price >= alert.targetPrice) ||
+          (alert.direction === 'below' && price <= alert.targetPrice)
+
+        if (triggered) {
+          changed = true
+          if (Notification.permission === 'granted') {
+            new Notification(`${alert.symbol} price alert`, {
+              body: `${alert.symbol} is ${alert.direction} $${alert.targetPrice} (now $${price.toFixed(4)})`,
+              icon: '/favicon.svg',
+            })
+          }
+          return { ...alert, triggered: true }
+        }
+        return alert
+      })
+
+      if (changed) persist(next, 'alert triggered')
+      return next
+    })
+  }, [persist])
 
   const requestPermission = useCallback(async () => {
     if (Notification.permission === 'default') await Notification.requestPermission()

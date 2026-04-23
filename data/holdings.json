@@ -1,0 +1,10 @@
+[
+  { "id": "dogecoin",    "symbol": "DOGE", "name": "Dogecoin",       "amount": 183680.07 },
+  { "id": "avalanche-2", "symbol": "AVAX", "name": "Avalanche",      "amount": 1627.72 },
+  { "id": "chainlink",   "symbol": "LINK", "name": "Chainlink",      "amount": 1325.24 },
+  { "id": "fetch-ai",    "symbol": "FET",  "name": "Fetch.ai",       "amount": 8255.17 },
+  { "id": "ripple",      "symbol": "XRP",  "name": "XRP",            "amount": 561.57 },
+  { "id": "sui",         "symbol": "SUI",  "name": "Sui",            "amount": 854.5 },
+  { "id": "bittensor",   "symbol": "TAO",  "name": "Bittensor",      "amount": 3.205 },
+  { "id": "near",        "symbol": "NEAR", "name": "NEAR Protocol",  "amount": 566.5 }
+]

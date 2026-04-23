@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
-import { LogOut } from 'lucide-react'
 import { PortfolioHeader } from './components/PortfolioHeader'
 import { HoldingsTable } from './components/HoldingsTable'
 import { EditHoldingModal } from './components/EditHoldingModal'
 import { PortfolioChart } from './components/PortfolioChart'
 import { AlertsPanel } from './components/AlertsPanel'
-import { LoginScreen } from './components/LoginScreen'
-import { useAuth } from './hooks/useAuth'
 import { usePortfolio } from './hooks/usePortfolio'
 import { usePrices } from './hooks/usePrices'
 import { useHistory } from './hooks/useHistory'
@@ -16,30 +13,14 @@ import type { Holding } from './types'
 type Tab = 'overview' | 'chart' | 'alerts'
 
 export default function App() {
-  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0d0d0f] flex items-center justify-center">
-        <div className="w-5 h-5 border-2 border-gray-600 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (!user) return <LoginScreen onSignIn={signInWithGoogle} />
-
-  return <Portfolio userId={user.id} onSignOut={signOut} />
-}
-
-function Portfolio({ userId, onSignOut }: { userId: string; onSignOut: () => void }) {
   const [tab, setTab] = useState<Tab>('overview')
   const [editTarget, setEditTarget] = useState<Holding | null>(null)
   const [addOpen, setAddOpen] = useState(false)
 
-  const { holdings, ready, addHolding, updateHolding, removeHolding } = usePortfolio(userId)
+  const { holdings, ready, addHolding, updateHolding, removeHolding } = usePortfolio()
   const { prices, loading, lastUpdated, refresh } = usePrices(holdings)
-  const { history, addSnapshot } = useHistory(userId)
-  const { alerts, addAlert, toggleAlert, removeAlert, checkAlerts, requestPermission } = useAlerts(userId)
+  const { history, addSnapshot } = useHistory()
+  const { alerts, addAlert, toggleAlert, removeAlert, checkAlerts, requestPermission } = useAlerts()
 
   useEffect(() => {
     if (Object.keys(prices).length > 0) {
@@ -47,22 +28,6 @@ function Portfolio({ userId, onSignOut }: { userId: string; onSignOut: () => voi
       checkAlerts(prices)
     }
   }, [prices])
-
-  const handleSaveNew = async (h: Holding) => {
-    await addHolding(h)
-    setAddOpen(false)
-  }
-
-  const handleSaveEdit = async (h: Holding) => {
-    await updateHolding(h.id, { amount: h.amount, costBasisUsd: h.costBasisUsd })
-    setEditTarget(null)
-  }
-
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'chart', label: 'Chart' },
-    { key: 'alerts', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
-  ]
 
   if (!ready) {
     return (
@@ -72,18 +37,15 @@ function Portfolio({ userId, onSignOut }: { userId: string; onSignOut: () => voi
     )
   }
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'chart', label: 'Chart' },
+    { key: 'alerts', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
+  ]
+
   return (
     <div className="min-h-screen bg-[#0d0d0f] text-white">
       <div className="max-w-2xl mx-auto">
-        <div className="flex justify-end px-4 pt-3">
-          <button
-            onClick={onSignOut}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            <LogOut size={13} /> Sign out
-          </button>
-        </div>
-
         <PortfolioHeader
           holdings={holdings}
           prices={prices}
@@ -134,10 +96,10 @@ function Portfolio({ userId, onSignOut }: { userId: string; onSignOut: () => voi
       </div>
 
       {addOpen && (
-        <EditHoldingModal onSave={handleSaveNew} onClose={() => setAddOpen(false)} />
+        <EditHoldingModal onSave={async h => { await addHolding(h); setAddOpen(false) }} onClose={() => setAddOpen(false)} />
       )}
       {editTarget && (
-        <EditHoldingModal holding={editTarget} onSave={handleSaveEdit} onClose={() => setEditTarget(null)} />
+        <EditHoldingModal holding={editTarget} onSave={async h => { await updateHolding(h.id, { amount: h.amount, costBasisUsd: h.costBasisUsd }); setEditTarget(null) }} onClose={() => setEditTarget(null)} />
       )}
     </div>
   )
