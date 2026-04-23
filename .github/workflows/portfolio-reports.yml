@@ -1,0 +1,59 @@
+name: Portfolio Reports
+
+on:
+  schedule:
+    - cron: '0 7 * * *'    # daily at 7am UTC
+    - cron: '0 7 * * 1'    # weekly on Monday at 7am UTC
+    - cron: '0 7 1 * *'    # monthly on the 1st at 7am UTC
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+    inputs:
+      report_type:
+        description: 'Report type'
+        required: true
+        default: 'daily'
+        type: choice
+        options: [daily, weekly, monthly]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Determine report type
+        id: type
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.report_type }}" >> $GITHUB_OUTPUT
+          else
+            DAY=$(date -u +%u)   # 1=Mon ... 7=Sun
+            DOM=$(date -u +%d)   # day of month
+            if [ "$DOM" = "01" ]; then
+              echo "type=monthly" >> $GITHUB_OUTPUT
+            elif [ "$DAY" = "1" ]; then
+              echo "type=weekly" >> $GITHUB_OUTPUT
+            else
+              echo "type=daily" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Generate report
+        run: node scripts/generate-report.mjs ${{ steps.type.outputs.type }}
+
+      - name: Commit report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/
+          git diff --cached --quiet || git commit -m "report: ${{ steps.type.outputs.type }} $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push
