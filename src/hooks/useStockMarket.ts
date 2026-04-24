@@ -71,25 +71,28 @@ function computeSignal(price: StockPriceData): { signal: StockSignal; score: num
 }
 
 async function fetchMarketPrices(ids: string[]): Promise<Record<string, StockPriceData>> {
-  const fields = 'symbol,regularMarketPrice,regularMarketChangePercent,currency,fiftyTwoWeekHigh,fiftyTwoWeekLow'
-  const res = await fetch(
-    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${ids.join(',')}&fields=${fields}`
+  const settled = await Promise.allSettled(
+    ids.map(sym =>
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`)
+        .then(r => r.ok ? r.json() : Promise.reject())
+    )
   )
-  if (!res.ok) throw new Error(`Yahoo ${res.status}`)
-  const json = await res.json()
   const result: Record<string, StockPriceData> = {}
-  for (const q of json.quoteResponse?.result ?? []) {
-    if (!q.regularMarketPrice) continue
-    const isGbx = q.currency === 'GBp'
+  settled.forEach((r, i) => {
+    if (r.status !== 'fulfilled') return
+    const meta = r.value?.chart?.result?.[0]?.meta
+    if (!meta?.regularMarketPrice) return
+    const isGbx = meta.currency === 'GBp'
     const div = isGbx ? 100 : 1
-    result[q.symbol] = {
-      priceNative: q.regularMarketPrice / div,
-      change24hPct: q.regularMarketChangePercent ?? 0,
-      nativeCurrency: (q.currency === 'GBP' || isGbx) ? 'GBP' : 'USD',
-      high52w: q.fiftyTwoWeekHigh != null ? q.fiftyTwoWeekHigh / div : undefined,
-      low52w:  q.fiftyTwoWeekLow  != null ? q.fiftyTwoWeekLow  / div : undefined,
+    const prev = meta.chartPreviousClose ?? meta.previousClose ?? meta.regularMarketPrice
+    result[ids[i]] = {
+      priceNative: meta.regularMarketPrice / div,
+      change24hPct: prev > 0 ? ((meta.regularMarketPrice - prev) / prev) * 100 : 0,
+      nativeCurrency: (meta.currency === 'GBP' || isGbx) ? 'GBP' : 'USD',
+      high52w: meta.fiftyTwoWeekHigh != null ? meta.fiftyTwoWeekHigh / div : undefined,
+      low52w:  meta.fiftyTwoWeekLow  != null ? meta.fiftyTwoWeekLow  / div : undefined,
     }
-  }
+  })
   return result
 }
 

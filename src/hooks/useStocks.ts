@@ -11,11 +11,15 @@ export function useStocks() {
   const shaRef = useRef<string | null>(null)
 
   useEffect(() => {
-    getFile<StockHolding[]>(PATH).then(({ data, sha }) => {
-      shaRef.current = sha
-      setStocks(data ?? SEED_STOCKS)
-      setReady(true)
-    })
+    getFile<StockHolding[]>(PATH)
+      .then(({ data, sha }) => {
+        shaRef.current = sha
+        setStocks(data ?? SEED_STOCKS)
+      })
+      .catch(() => {
+        setStocks(SEED_STOCKS)
+      })
+      .finally(() => setReady(true))
   }, [])
 
   const persist = useCallback(async (next: StockHolding[], message: string) => {

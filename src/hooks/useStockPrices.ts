@@ -3,48 +3,12 @@ import type { StockHolding, StockPriceData, StockPriceMap } from '../types'
 
 const REFRESH_MS = 60_000
 
-function parseYahooQuote(q: {
-  symbol: string
-  regularMarketPrice?: number
-  regularMarketChangePercent?: number
-  currency?: string
-  fiftyTwoWeekHigh?: number
-  fiftyTwoWeekLow?: number
-}): StockPriceData | null {
-  if (!q.regularMarketPrice) return null
-  const isGbx = q.currency === 'GBp'
-  const nativeCurrency: 'USD' | 'GBP' = (q.currency === 'GBP' || isGbx) ? 'GBP' : 'USD'
-  const divisor = isGbx ? 100 : 1
-  return {
-    priceNative: q.regularMarketPrice / divisor,
-    change24hPct: q.regularMarketChangePercent ?? 0,
-    nativeCurrency,
-    high52w: q.fiftyTwoWeekHigh != null ? q.fiftyTwoWeekHigh / divisor : undefined,
-    low52w: q.fiftyTwoWeekLow  != null ? q.fiftyTwoWeekLow  / divisor : undefined,
-  }
-}
-
-async function fetchV7(symbols: string[]): Promise<StockPriceMap> {
-  const fields = 'symbol,regularMarketPrice,regularMarketChangePercent,currency,fiftyTwoWeekHigh,fiftyTwoWeekLow'
-  const res = await fetch(
-    `https://query2.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(',')}&fields=${fields}`
-  )
-  if (!res.ok) throw new Error(`Yahoo v7: ${res.status}`)
-  const json = await res.json()
-  const result: StockPriceMap = {}
-  for (const q of json.quoteResponse?.result ?? []) {
-    const parsed = parseYahooQuote(q)
-    if (parsed) result[q.symbol] = parsed
-  }
-  if (Object.keys(result).length === 0) throw new Error('No data from v7')
-  return result
-}
 
 async function fetchV8(symbols: string[]): Promise<StockPriceMap> {
   const settled = await Promise.allSettled(
     symbols.map(sym =>
-      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=2d`)
-        .then(r => r.ok ? r.json() : Promise.reject())
+      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error(`${r.status}`)))
     )
   )
   const result: StockPriceMap = {}
@@ -55,13 +19,16 @@ async function fetchV8(symbols: string[]): Promise<StockPriceMap> {
     const isGbx = meta.currency === 'GBp'
     const divisor = isGbx ? 100 : 1
     const nativeCurrency: 'USD' | 'GBP' = (meta.currency === 'GBP' || isGbx) ? 'GBP' : 'USD'
-    const prev = meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice
+    const prev = meta.chartPreviousClose ?? meta.previousClose ?? meta.regularMarketPrice
     result[symbols[i]] = {
       priceNative: meta.regularMarketPrice / divisor,
       change24hPct: prev > 0 ? ((meta.regularMarketPrice - prev) / prev) * 100 : 0,
       nativeCurrency,
+      high52w: meta.fiftyTwoWeekHigh != null ? meta.fiftyTwoWeekHigh / divisor : undefined,
+      low52w:  meta.fiftyTwoWeekLow  != null ? meta.fiftyTwoWeekLow  / divisor : undefined,
     }
   })
+  if (Object.keys(result).length === 0) throw new Error('No data from Yahoo Finance')
   return result
 }
 
@@ -79,10 +46,9 @@ export function useStockPrices(stocks: StockHolding[]) {
     try {
       let data: StockPriceMap
       try {
-        data = await fetchV7(ids)
-      } catch {
         data = await fetchV8(ids)
-      }
+      } catch {
+        throw new Error('Failed to fetch stock prices')
       setPrices(data)
       setLastUpdated(new Date())
     } catch (e) {
