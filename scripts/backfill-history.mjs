@@ -1,13 +1,8 @@
 /**
- * One-time script to backfill 30 days of portfolio history from CoinGecko.
+ * One-time script to backfill 30 days of portfolio history.
+ * Uses Binance public klines API (no key, generous rate limit).
  * Run with: node --env-file=.env.local scripts/backfill-history.mjs
  */
-
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
-void __dirname
 
 const TOKEN = process.env.VITE_GITHUB_TOKEN
 if (!TOKEN) { console.error('VITE_GITHUB_TOKEN not set'); process.exit(1) }
@@ -47,30 +42,54 @@ async function ghPut(path, data, sha, message) {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
+// CoinGecko ID → Binance USDT pair
+const BINANCE_PAIRS = {
+  'dogecoin':    'DOGEUSDT',
+  'avalanche-2': 'AVAXUSDT',
+  'chainlink':   'LINKUSDT',
+  'fetch-ai':    'FETUSDT',
+  'ripple':      'XRPUSDT',
+  'sui':         'SUIUSDT',
+  'bittensor':   'TAOUSDT',
+  'near':        'NEARUSDT',
+  'bitcoin':     'BTCUSDT',
+  'ethereum':    'ETHUSDT',
+  'solana':      'SOLUSDT',
+}
+
 const { data: holdings } = await ghGet('data/holdings.json')
 const { data: existingHistory, sha: historySha } = await ghGet('data/history.json')
 
 console.log(`Loaded ${holdings.length} holdings, ${existingHistory?.length ?? 0} existing snapshots`)
+console.log('Fetching 30-day klines from Binance...')
 
-// Fetch 30-day daily price chart for each coin
 const priceCharts = {}
 for (const h of holdings) {
-  console.log(`Fetching 30-day history for ${h.symbol}...`)
-  await sleep(3000)
+  const pair = BINANCE_PAIRS[h.id]
+  if (!pair) { console.log(`  ${h.symbol}: no Binance pair, skipping`); continue }
+
+  process.stdout.write(`  ${h.symbol} (${pair})... `)
+  await sleep(200)
   try {
     const res = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${h.id}/market_chart?vs_currency=usd&days=30&interval=daily`
+      `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1d&limit=32`
     )
-    if (!res.ok) { console.warn(`  HTTP ${res.status}`); continue }
-    const json = await res.json()
-    priceCharts[h.id] = json.prices // [[timestamp_ms, price], ...]
-    console.log(`  ${json.prices.length} data points`)
+    if (!res.ok) { console.log(`HTTP ${res.status}`); continue }
+    const klines = await res.json()
+    // kline format: [open_time, open, high, low, close, ...]
+    // open_time is ms timestamp; close price is index 4
+    const prices = klines.map(k => [k[0], parseFloat(k[4])])
+    priceCharts[h.id] = prices
+    console.log(`${prices.length} pts`)
   } catch (e) {
-    console.warn(`  Error: ${e.message}`)
+    console.log(`err: ${e.message}`)
   }
 }
 
-// Group prices by calendar day (floor to midnight UTC)
+const coinsWithData = Object.keys(priceCharts).length
+console.log(`\nGot data for ${coinsWithData}/${holdings.length} coins`)
+
+// Compute portfolio value per calendar day
 const dayMap = new Map()
 for (const [coinId, prices] of Object.entries(priceCharts)) {
   for (const [ts, price] of prices) {
@@ -80,7 +99,6 @@ for (const [coinId, prices] of Object.entries(priceCharts)) {
   }
 }
 
-// Compute total portfolio value per day
 const backfillSnapshots = []
 for (const [dayKey, prices] of dayMap.entries()) {
   let totalValue = 0
@@ -91,15 +109,19 @@ for (const [dayKey, prices] of dayMap.entries()) {
   backfillSnapshots.push({ timestamp: dayKey, totalValueUsd: totalValue })
 }
 backfillSnapshots.sort((a, b) => a.timestamp - b.timestamp)
-console.log(`\nGenerated ${backfillSnapshots.length} backfill snapshots`)
 
-// Keep only today's real-time snapshots from the app (last 24h); replace all older entries with backfill
+// Keep today's real-time snapshots; replace all older entries with fresh backfill
 const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
 const todaySnapshots = (existingHistory ?? []).filter(s => s.timestamp > oneDayAgo)
 const merged = [...todaySnapshots, ...backfillSnapshots]
 merged.sort((a, b) => a.timestamp - b.timestamp)
-console.log(`Kept ${todaySnapshots.length} today-snapshots + ${backfillSnapshots.length} backfill = ${merged.length} total`)
 
-await ghPut('data/history.json', merged, historySha, 'backfill: 30-day portfolio history')
-console.log('Done! data/history.json updated on GitHub.')
-console.log('\nRefresh the app — chart and 7d/30d performance will now show real data.')
+const fmt = v => '$' + new Intl.NumberFormat('en-US').format(Math.round(v))
+const oldest = merged[0]
+const newest = merged[merged.length - 1]
+console.log(`Generated ${backfillSnapshots.length} backfill snapshots`)
+console.log(`Total: ${todaySnapshots.length} today + ${backfillSnapshots.length} backfill = ${merged.length} snapshots`)
+console.log(`Range: ${fmt(oldest.totalValueUsd)} (${new Date(oldest.timestamp).toISOString().split('T')[0]}) → ${fmt(newest.totalValueUsd)} (today)`)
+
+await ghPut('data/history.json', merged, historySha, 'backfill: 30-day portfolio history via Binance')
+console.log('\nDone! Refresh the app — chart and 7d/30d performance now show real data.')
