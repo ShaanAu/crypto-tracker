@@ -4,4 +4,13 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      '/api/yf': {
+        target: 'https://query1.finance.yahoo.com',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api\/yf/, ''),
+      },
+    },
+  },
 })

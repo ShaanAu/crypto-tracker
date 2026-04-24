@@ -4,7 +4,7 @@ import type { StockSignal, MarketStock, StockPriceData } from '../types'
 export type StockCategory = 'All' | 'Crypto' | 'AI' | 'Semi' | 'ETF' | 'Growth'
 
 const CURATED: { id: string; symbol: string; name: string; category: Exclude<StockCategory, 'All'> }[] = [
-  // Crypto stocks
+  // Crypto stocks & miners
   { id: 'COIN',   symbol: 'COIN',  name: 'Coinbase',                   category: 'Crypto' },
   { id: 'MSTR',   symbol: 'MSTR',  name: 'Strategy',                   category: 'Crypto' },
   { id: 'GLXY',   symbol: 'GLXY',  name: 'Galaxy Digital',             category: 'Crypto' },
@@ -12,6 +12,12 @@ const CURATED: { id: string; symbol: string; name: string; category: Exclude<Sto
   { id: 'RIOT',   symbol: 'RIOT',  name: 'Riot Platforms',             category: 'Crypto' },
   { id: 'MARA',   symbol: 'MARA',  name: 'MARA Holdings',              category: 'Crypto' },
   { id: 'BMNR',   symbol: 'BMNR',  name: 'BitMine Immersion',          category: 'Crypto' },
+  { id: 'CLSK',   symbol: 'CLSK',  name: 'CleanSpark',                 category: 'Crypto' },
+  { id: 'IREN',   symbol: 'IREN',  name: 'Iris Energy',                category: 'Crypto' },
+  { id: 'WULF',   symbol: 'WULF',  name: 'TeraWulf',                   category: 'Crypto' },
+  { id: 'HUT',    symbol: 'HUT',   name: 'Hut 8 Mining',               category: 'Crypto' },
+  { id: 'BTBT',   symbol: 'BTBT',  name: 'Bit Digital',                category: 'Crypto' },
+  { id: 'CIFR',   symbol: 'CIFR',  name: 'Cipher Mining',              category: 'Crypto' },
   // AI/Tech
   { id: 'NVDA',   symbol: 'NVDA',  name: 'NVIDIA',                     category: 'AI' },
   { id: 'AMD',    symbol: 'AMD',   name: 'AMD',                        category: 'AI' },
@@ -20,22 +26,40 @@ const CURATED: { id: string; symbol: string; name: string; category: Exclude<Sto
   { id: 'META',   symbol: 'META',  name: 'Meta',                       category: 'AI' },
   { id: 'GOOGL',  symbol: 'GOOGL', name: 'Alphabet',                   category: 'AI' },
   { id: 'MSFT',   symbol: 'MSFT',  name: 'Microsoft',                  category: 'AI' },
+  { id: 'AMZN',   symbol: 'AMZN',  name: 'Amazon',                     category: 'AI' },
+  { id: 'AAPL',   symbol: 'AAPL',  name: 'Apple',                      category: 'AI' },
+  { id: 'NBIS',   symbol: 'NBIS',  name: 'Nebius Group',               category: 'AI' },
+  { id: 'NET',    symbol: 'NET',   name: 'Cloudflare',                 category: 'AI' },
+  { id: 'BBAI',   symbol: 'BBAI',  name: 'BigBear.ai',                 category: 'AI' },
+  { id: 'SAIC',   symbol: 'SAIC',  name: 'Science Applications Intl',  category: 'AI' },
+  { id: 'LDOS',   symbol: 'LDOS',  name: 'Leidos Holdings',            category: 'AI' },
+  { id: 'CACI',   symbol: 'CACI',  name: 'CACI International',         category: 'AI' },
+  { id: 'BAH',    symbol: 'BAH',   name: 'Booz Allen Hamilton',        category: 'AI' },
+  { id: 'RR.L',   symbol: 'RR',    name: 'Rolls-Royce',                category: 'AI' },
   // Semiconductors
   { id: 'TSM',    symbol: 'TSM',   name: 'TSMC',                       category: 'Semi' },
   { id: 'ASML',   symbol: 'ASML',  name: 'ASML Holding',               category: 'Semi' },
   { id: 'QCOM',   symbol: 'QCOM',  name: 'Qualcomm',                   category: 'Semi' },
   { id: 'INTC',   symbol: 'INTC',  name: 'Intel',                      category: 'Semi' },
   { id: 'AMAT',   symbol: 'AMAT',  name: 'Applied Materials',          category: 'Semi' },
+  { id: 'MU',     symbol: 'MU',    name: 'Micron Technology',          category: 'Semi' },
+  { id: 'SMCI',   symbol: 'SMCI',  name: 'Super Micro Computer',       category: 'Semi' },
   // UK ETFs (LSE, GBP)
   { id: 'DAGB.L', symbol: 'DAGB',  name: 'VanEck Crypto & Blockchain', category: 'ETF' },
   { id: 'SMGB.L', symbol: 'SMGB',  name: 'VanEck Semiconductor',       category: 'ETF' },
   { id: 'VUSA.L', symbol: 'VUSA',  name: 'Vanguard S&P 500',           category: 'ETF' },
   { id: 'VWRL.L', symbol: 'VWRL',  name: 'Vanguard FTSE All-World',    category: 'ETF' },
   { id: 'SUAG.L', symbol: 'SUAG',  name: 'SPDR US Agg Bond',           category: 'ETF' },
+  { id: 'ARKK',   symbol: 'ARKK',  name: 'ARK Innovation ETF',         category: 'ETF' },
+  { id: 'SMH',    symbol: 'SMH',   name: 'VanEck Semiconductor ETF',   category: 'ETF' },
   // Growth / Fintech
   { id: 'TSLA',   symbol: 'TSLA',  name: 'Tesla',                      category: 'Growth' },
   { id: 'RBLX',   symbol: 'RBLX',  name: 'Roblox',                     category: 'Growth' },
   { id: 'SOFI',   symbol: 'SOFI',  name: 'SoFi Technologies',          category: 'Growth' },
+  { id: 'SHOP',   symbol: 'SHOP',  name: 'Shopify',                    category: 'Growth' },
+  { id: 'HIMS',   symbol: 'HIMS',  name: 'Hims & Hers',                category: 'Growth' },
+  { id: 'OSCR',   symbol: 'OSCR',  name: 'Oscar Health',               category: 'Growth' },
+  { id: 'EOSE',   symbol: 'EOSE',  name: 'Eos Energy',                 category: 'Growth' },
   { id: 'SQ',     symbol: 'SQ',    name: 'Block (Square)',              category: 'Growth' },
   { id: 'PYPL',   symbol: 'PYPL',  name: 'PayPal',                     category: 'Growth' },
   { id: 'NFLX',   symbol: 'NFLX',  name: 'Netflix',                    category: 'Growth' },
@@ -70,10 +94,14 @@ function computeSignal(price: StockPriceData): { signal: StockSignal; score: num
   return { signal, score }
 }
 
+const YF_BASE = import.meta.env.DEV
+  ? '/api/yf/v8/finance/chart'
+  : 'https://query1.finance.yahoo.com/v8/finance/chart'
+
 async function fetchMarketPrices(ids: string[]): Promise<Record<string, StockPriceData>> {
   const settled = await Promise.allSettled(
     ids.map(sym =>
-      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`)
+      fetch(`${YF_BASE}/${encodeURIComponent(sym)}?interval=1d&range=2d`)
         .then(r => r.ok ? r.json() : Promise.reject())
     )
   )

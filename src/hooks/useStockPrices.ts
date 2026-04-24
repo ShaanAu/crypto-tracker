@@ -4,10 +4,14 @@ import type { StockHolding, StockPriceData, StockPriceMap } from '../types'
 const REFRESH_MS = 60_000
 
 
+const YF_BASE = import.meta.env.DEV
+  ? '/api/yf/v8/finance/chart'
+  : 'https://query1.finance.yahoo.com/v8/finance/chart'
+
 async function fetchV8(symbols: string[]): Promise<StockPriceMap> {
   const settled = await Promise.allSettled(
     symbols.map(sym =>
-      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`)
+      fetch(`${YF_BASE}/${encodeURIComponent(sym)}?interval=1d&range=2d`)
         .then(r => r.ok ? r.json() : Promise.reject(new Error(`${r.status}`)))
     )
   )
