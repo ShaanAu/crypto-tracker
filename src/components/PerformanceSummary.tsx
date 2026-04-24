@@ -22,6 +22,7 @@ function findClosest(history: HistorySnapshot[], targetMs: number): HistorySnaps
 }
 
 function usePeriod(currentValue: number, history: HistorySnapshot[], daysAgo: number): PeriodResult {
+  if (currentValue === 0) return { change: 0, pct: 0, available: false }
   const targetMs = Date.now() - daysAgo * 24 * 60 * 60 * 1000
   const snapshot = findClosest(history, targetMs)
 

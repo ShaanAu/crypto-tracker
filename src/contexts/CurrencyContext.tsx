@@ -31,7 +31,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const locale = currency === 'gbp' ? 'en-GB' : 'en-US'
     const curr   = currency === 'gbp' ? 'GBP' : 'USD'
 
-    if (Math.abs(value) >= 1000) {
+    // Values >= $1 (prices, P&L, totals): use `decimals` places (default 2)
+    // Values < $1 (sub-dollar coin prices): allow up to 6 decimal places
+    if (Math.abs(value) >= 1) {
       return new Intl.NumberFormat(locale, {
         style: 'currency', currency: curr,
         minimumFractionDigits: decimals, maximumFractionDigits: decimals,

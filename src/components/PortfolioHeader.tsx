@@ -25,11 +25,12 @@ export function PortfolioHeader({ holdings, prices, loading, lastUpdated, onRefr
   const changePct24h = totalValue24hAgo > 0 ? (change24h / totalValue24hAgo) * 100 : 0
 
   const totalPnl = holdings.reduce((sum, h) => {
-    if (h.costBasisUsd == null) return sum
-    return sum + (( prices[h.id]?.usd ?? 0) - h.costBasisUsd) * h.amount
+    const price = prices[h.id]?.usd
+    if (h.costBasisUsd == null || !price) return sum
+    return sum + (price - h.costBasisUsd) * h.amount
   }, 0)
   const costBasisTotal = holdings.reduce((sum, h) => h.costBasisUsd != null ? sum + h.costBasisUsd * h.amount : sum, 0)
-  const hasCostBasis = holdings.some(h => h.costBasisUsd != null)
+  const hasCostBasis = holdings.some(h => h.costBasisUsd != null) && totalValue > 0
 
   return (
     <div className="px-4 pt-6 pb-4">

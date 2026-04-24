@@ -21,7 +21,7 @@ export function HoldingsTable({ holdings, prices, onEdit, onDelete }: Props) {
     const price = prices[h.id]?.usd ?? 0
     const change = prices[h.id]?.usd_24h_change ?? 0
     const value = h.amount * price
-    const pnl = h.costBasisUsd != null ? (price - h.costBasisUsd) * h.amount : null
+    const pnl = h.costBasisUsd != null && price > 0 ? (price - h.costBasisUsd) * h.amount : null
     return { ...h, price, change, value, pnl }
   })
 
