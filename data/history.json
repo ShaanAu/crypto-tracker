@@ -1,5 +1,117 @@
 [
   {
+    "timestamp": 1774483200000,
+    "totalValueUsd": 33360.173117815284
+  },
+  {
+    "timestamp": 1774569600000,
+    "totalValueUsd": 31707.46350618078
+  },
+  {
+    "timestamp": 1774656000000,
+    "totalValueUsd": 30824.576816835055
+  },
+  {
+    "timestamp": 1774742400000,
+    "totalValueUsd": 30920.75191845429
+  },
+  {
+    "timestamp": 1774828800000,
+    "totalValueUsd": 30578.155934623763
+  },
+  {
+    "timestamp": 1774915200000,
+    "totalValueUsd": 30960.514978075662
+  },
+  {
+    "timestamp": 1775001600000,
+    "totalValueUsd": 31415.24369166381
+  },
+  {
+    "timestamp": 1775088000000,
+    "totalValueUsd": 31806.322677200464
+  },
+  {
+    "timestamp": 1775174400000,
+    "totalValueUsd": 30839.166571463466
+  },
+  {
+    "timestamp": 1775260800000,
+    "totalValueUsd": 31313.553159717747
+  },
+  {
+    "timestamp": 1775347200000,
+    "totalValueUsd": 31507.997309870636
+  },
+  {
+    "timestamp": 1775433600000,
+    "totalValueUsd": 31666.123873178673
+  },
+  {
+    "timestamp": 1775520000000,
+    "totalValueUsd": 31117.37498692846
+  },
+  {
+    "timestamp": 1775606400000,
+    "totalValueUsd": 32994.10871996716
+  },
+  {
+    "timestamp": 1775692800000,
+    "totalValueUsd": 31711.863462387453
+  },
+  {
+    "timestamp": 1775779200000,
+    "totalValueUsd": 32219.505459011227
+  },
+  {
+    "timestamp": 1775865600000,
+    "totalValueUsd": 32526.528466581498
+  },
+  {
+    "timestamp": 1775952000000,
+    "totalValueUsd": 32344.589739149174
+  },
+  {
+    "timestamp": 1776038400000,
+    "totalValueUsd": 31389.747031734332
+  },
+  {
+    "timestamp": 1776124800000,
+    "totalValueUsd": 33001.48804681135
+  },
+  {
+    "timestamp": 1776211200000,
+    "totalValueUsd": 32245.8899234711
+  },
+  {
+    "timestamp": 1776297600000,
+    "totalValueUsd": 32785.90563724662
+  },
+  {
+    "timestamp": 1776384000000,
+    "totalValueUsd": 34076.20376104007
+  },
+  {
+    "timestamp": 1776470400000,
+    "totalValueUsd": 34129.51841346975
+  },
+  {
+    "timestamp": 1776556800000,
+    "totalValueUsd": 32651.52273807375
+  },
+  {
+    "timestamp": 1776643200000,
+    "totalValueUsd": 31752.508631540783
+  },
+  {
+    "timestamp": 1776729600000,
+    "totalValueUsd": 32591.653814628156
+  },
+  {
+    "timestamp": 1776816000000,
+    "totalValueUsd": 32759.25700359326
+  },
+  {
     "timestamp": 1776983513226,
     "totalValueUsd": 50469.61475223
   },
