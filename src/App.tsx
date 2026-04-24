@@ -21,7 +21,7 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false)
 
   const { holdings, ready, addHolding, updateHolding, removeHolding } = usePortfolio()
-  const { prices, loading, lastUpdated, refresh } = usePrices(holdings)
+  const { prices, loading, error: priceError, lastUpdated, refresh } = usePrices(holdings)
   const { history, addSnapshot } = useHistory()
   const { alerts, addAlert, toggleAlert, removeAlert, checkAlerts, requestPermission } = useAlerts()
   const { coins: marketCoins, loading: marketLoading, lastUpdated: marketUpdated } = useMarket()
@@ -51,6 +51,12 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0d0d0f] text-white">
       <div className="max-w-2xl mx-auto">
+        {priceError && (
+          <div className="mx-4 mt-3 px-3 py-2 bg-yellow-900/30 border border-yellow-700/50 rounded-lg text-yellow-400 text-xs flex items-center justify-between">
+            <span>⚠ Price fetch failed ({priceError}) — showing last known values</span>
+            <button onClick={refresh} className="underline ml-2">Retry</button>
+          </div>
+        )}
         <PortfolioHeader
           holdings={holdings}
           prices={prices}
