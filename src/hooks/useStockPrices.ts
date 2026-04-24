@@ -44,11 +44,7 @@ export function useStockPrices(stocks: StockHolding[]) {
     setLoading(true)
     setError(null)
     try {
-      let data: StockPriceMap
-      try {
-        data = await fetchV8(ids)
-      } catch {
-        throw new Error('Failed to fetch stock prices')
+      const data = await fetchV8(ids)
       setPrices(data)
       setLastUpdated(new Date())
     } catch (e) {
