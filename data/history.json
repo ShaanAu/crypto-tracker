@@ -386,5 +386,29 @@
   {
     "timestamp": 1777033387134,
     "totalValueUsd": 51635.42435217999
+  },
+  {
+    "timestamp": 1777039385094,
+    "totalValueUsd": 51365.70731715
+  },
+  {
+    "timestamp": 1777042797266,
+    "totalValueUsd": 51410.58010343
+  },
+  {
+    "timestamp": 1777044339963,
+    "totalValueUsd": 51308.837134019996
+  },
+  {
+    "timestamp": 1777047997723,
+    "totalValueUsd": 51498.497743
+  },
+  {
+    "timestamp": 1777051655860,
+    "totalValueUsd": 51476.556241750004
+  },
+  {
+    "timestamp": 1777055313312,
+    "totalValueUsd": 51482.23169825
   }
 ]
