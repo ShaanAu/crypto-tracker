@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import type { MarketCoin, Signal } from '../hooks/useMarket'
 import type { Holding } from '../types'
-import { formatUsd, formatPct } from '../utils/format'
+import { formatPct } from '../utils/format'
+import { useCurrency } from '../contexts/CurrencyContext'
 
 type SortKey = 'rank' | 'price' | 'change24h' | 'change7d' | 'signal' | 'marketCap'
 type FilterSignal = 'all' | Signal
@@ -28,6 +29,7 @@ export function MarketOverview({ coins, holdings, loading, lastUpdated }: Props)
   const [sortAsc, setSortAsc] = useState(true)
   const [filter, setFilter] = useState<FilterSignal>('all')
   const [showHeld, setShowHeld] = useState(false)
+  const { format } = useCurrency()
 
   const heldIds = new Set(holdings.map(h => h.id))
 
@@ -61,10 +63,10 @@ export function MarketOverview({ coins, holdings, loading, lastUpdated }: Props)
   const sortIcon = (key: SortKey) => sortKey === key ? (sortAsc ? ' ▲' : ' ▼') : ''
 
   const fmtCap = (v: number) => {
-    if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`
-    if (v >= 1e9)  return `$${(v / 1e9).toFixed(1)}B`
-    if (v >= 1e6)  return `$${(v / 1e6).toFixed(0)}M`
-    return formatUsd(v)
+    if (v >= 1e12) return `${(v / 1e12).toFixed(2)}T`
+    if (v >= 1e9)  return `${(v / 1e9).toFixed(1)}B`
+    if (v >= 1e6)  return `${(v / 1e6).toFixed(0)}M`
+    return format(v)
   }
 
   return (
@@ -144,7 +146,7 @@ export function MarketOverview({ coins, holdings, loading, lastUpdated }: Props)
                     </div>
                   </td>
                   <td className="py-2.5 px-3 text-right text-gray-200 text-sm">
-                    {formatUsd(c.price, c.price < 1 ? 4 : 2)}
+                    {format(c.price, c.price < 1 ? 4 : 2)}
                   </td>
                   <td className={`py-2.5 px-3 text-right text-xs font-medium ${c.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     <span className={`px-1.5 py-0.5 rounded ${c.change24h >= 0 ? 'bg-green-900/40' : 'bg-red-900/40'}`}>

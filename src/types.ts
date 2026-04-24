@@ -4,6 +4,7 @@ export interface Holding {
   name: string
   amount: number
   costBasisUsd?: number
+  image?: string
 }
 
 export interface PriceAlert {

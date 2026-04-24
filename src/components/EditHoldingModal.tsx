@@ -19,8 +19,8 @@ export function EditHoldingModal({ holding, onSave, onClose }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<CoinResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string } | null>(
-    holding ? { id: holding.id, symbol: holding.symbol, name: holding.name } : null
+  const [selected, setSelected] = useState<{ id: string; symbol: string; name: string; image?: string } | null>(
+    holding ? { id: holding.id, symbol: holding.symbol, name: holding.name, image: holding.image } : null
   )
   const [amount, setAmount] = useState(holding ? String(holding.amount) : '')
   const [costBasis, setCostBasis] = useState(holding?.costBasisUsd ? String(holding.costBasisUsd) : '')
@@ -47,6 +47,7 @@ export function EditHoldingModal({ holding, onSave, onClose }: Props) {
       name: selected.name,
       amount: parseFloat(amount),
       costBasisUsd: costBasis ? parseFloat(costBasis) : undefined,
+      image: selected.image,
     })
   }
 
@@ -90,7 +91,7 @@ export function EditHoldingModal({ holding, onSave, onClose }: Props) {
                     {results.map(r => (
                       <button
                         key={r.id}
-                        onClick={() => { setSelected(r); setResults([]); setQuery('') }}
+                        onClick={() => { setSelected({ ...r, image: r.thumb }); setResults([]); setQuery('') }}
                         className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-700 text-left transition-colors"
                       >
                         {r.thumb && <img src={r.thumb} alt="" className="w-5 h-5 rounded-full" />}

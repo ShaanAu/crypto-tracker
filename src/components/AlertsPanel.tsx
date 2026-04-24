@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Bell, BellOff, Trash2, Plus } from 'lucide-react'
 import type { PriceAlert, Holding, PriceMap } from '../types'
-import { formatUsd } from '../utils/format'
+import { useCurrency } from '../contexts/CurrencyContext'
 
 interface Props {
   alerts: PriceAlert[]
@@ -14,6 +14,7 @@ interface Props {
 }
 
 export function AlertsPanel({ alerts, holdings, prices, onAdd, onToggle, onRemove, onRequestPermission }: Props) {
+  const { format } = useCurrency()
   const [showForm, setShowForm] = useState(false)
   const [coinId, setCoinId] = useState(holdings[0]?.id ?? '')
   const [direction, setDirection] = useState<'above' | 'below'>('above')
@@ -62,9 +63,9 @@ export function AlertsPanel({ alerts, holdings, prices, onAdd, onToggle, onRemov
               <div>
                 <span className="text-gray-200 text-sm font-medium">{alert.symbol}</span>
                 <span className="text-gray-500 text-sm"> {alert.direction} </span>
-                <span className="text-gray-200 text-sm">{formatUsd(alert.targetPrice)}</span>
+                <span className="text-gray-200 text-sm">{format(alert.targetPrice)}</span>
                 {currentPrice != null && (
-                  <span className="text-gray-600 text-xs ml-2">(now {formatUsd(currentPrice)})</span>
+                  <span className="text-gray-600 text-xs ml-2">(now {format(currentPrice)})</span>
                 )}
                 {alert.triggered && (
                   <span className="ml-2 text-xs text-yellow-400">triggered</span>

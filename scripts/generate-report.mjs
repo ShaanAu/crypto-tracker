@@ -89,7 +89,8 @@ function parseRss(xml, max = 3) {
     const title   = (/<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(block) ?? /<title>(.*?)<\/title>/.exec(block))?.[1]?.trim()
     const link    = (/<link><!\[CDATA\[(.*?)\]\]><\/link>/.exec(block) ?? /<link>(.*?)<\/link>/.exec(block) ?? /<guid[^>]*>(.*?)<\/guid>/.exec(block))?.[1]?.trim()
     const pubDate = (/<pubDate>(.*?)<\/pubDate>/.exec(block))?.[1]?.trim()
-    if (title && link) items.push({ title, url: link, published: pubDate ? new Date(pubDate).toISOString().split('T')[0] : '' })
+    const cleanUrl = link?.split('?')[0]
+    if (title && cleanUrl) items.push({ title, url: cleanUrl, published: pubDate ? new Date(pubDate).toISOString().split('T')[0] : '' })
   }
   return items
 }

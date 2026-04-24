@@ -1,17 +1,19 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import type { HistorySnapshot } from '../types'
-import { formatUsd, formatDate } from '../utils/format'
+import { formatDate } from '../utils/format'
+import { useCurrency } from '../contexts/CurrencyContext'
 
 interface Props {
   history: HistorySnapshot[]
 }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+  const { format } = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2">
       <p className="text-gray-400 text-xs mb-1">{label}</p>
-      <p className="text-white font-semibold text-sm">{formatUsd(payload[0].value)}</p>
+      <p className="text-white font-semibold text-sm">{format(payload[0].value)}</p>
     </div>
   )
 }

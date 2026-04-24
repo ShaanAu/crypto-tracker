@@ -1,5 +1,6 @@
 import type { Holding, PriceMap, HistorySnapshot } from '../types'
-import { formatUsd, formatPct } from '../utils/format'
+import { formatPct } from '../utils/format'
+import { useCurrency } from '../contexts/CurrencyContext'
 
 interface Props {
   holdings: Holding[]
@@ -36,6 +37,7 @@ function usePeriod(currentValue: number, history: HistorySnapshot[], daysAgo: nu
 }
 
 function PeriodCard({ label, result }: { label: string; result: PeriodResult }) {
+  const { format } = useCurrency()
   const positive = result.change >= 0
 
   return (
@@ -44,7 +46,7 @@ function PeriodCard({ label, result }: { label: string; result: PeriodResult }) 
       {result.available ? (
         <>
           <div className={`text-sm font-semibold ${positive ? 'text-green-400' : 'text-red-400'}`}>
-            {positive ? '+' : ''}{formatUsd(result.change)}
+            {positive ? '+' : ''}{format(result.change)}
           </div>
           <div className={`text-xs mt-0.5 px-1.5 py-0.5 rounded inline-block font-medium ${positive ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'}`}>
             {formatPct(result.pct)}

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { Holding, PriceMap } from '../types'
-import { formatUsd, formatPct, formatAmount } from '../utils/format'
+import { formatPct, formatAmount } from '../utils/format'
+import { useCurrency } from '../contexts/CurrencyContext'
 
 type SortKey = 'value' | 'price' | 'change' | 'pnl'
 
@@ -14,6 +15,7 @@ interface Props {
 
 export function HoldingsTable({ holdings, prices, onEdit, onDelete }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('value')
+  const { format } = useCurrency()
 
   const enriched = holdings.map(h => {
     const price = prices[h.id]?.usd ?? 0
@@ -58,9 +60,10 @@ export function HoldingsTable({ holdings, prices, onEdit, onDelete }: Props) {
             <tr key={h.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 group">
               <td className="py-3 px-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-200">
-                    {h.symbol.slice(0, 2)}
-                  </div>
+                  {h.image
+                    ? <img src={h.image} alt={h.symbol} className="w-8 h-8 rounded-full" />
+                    : <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-200">{h.symbol.slice(0, 2)}</div>
+                  }
                   <div>
                     <div className="font-medium text-gray-200">{h.symbol}</div>
                     <div className="text-xs text-gray-500">{h.name}</div>
@@ -68,7 +71,7 @@ export function HoldingsTable({ holdings, prices, onEdit, onDelete }: Props) {
                 </div>
               </td>
               <td className="py-3 px-4 text-right text-gray-200">
-                {h.price > 0 ? formatUsd(h.price) : '—'}
+                {h.price > 0 ? format(h.price) : '—'}
               </td>
               <td className={`py-3 px-4 text-right text-xs font-medium ${h.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 <span className={`px-1.5 py-0.5 rounded ${h.change >= 0 ? 'bg-green-900/40' : 'bg-red-900/40'}`}>
@@ -76,13 +79,13 @@ export function HoldingsTable({ holdings, prices, onEdit, onDelete }: Props) {
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
-                <div className="text-gray-200">{h.value > 0 ? formatUsd(h.value) : '—'}</div>
+                <div className="text-gray-200">{h.value > 0 ? format(h.value) : '—'}</div>
                 <div className="text-xs text-gray-500">{formatAmount(h.amount)} {h.symbol}</div>
               </td>
               <td className="py-3 px-4 text-right">
                 {h.pnl != null ? (
                   <span className={`text-xs font-medium ${h.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {h.pnl >= 0 ? '+' : ''}{formatUsd(h.pnl)}
+                    {h.pnl >= 0 ? '+' : ''}{format(h.pnl)}
                   </span>
                 ) : (
                   <span className="text-xs text-gray-600">no basis</span>
