@@ -5,13 +5,15 @@ import { EditHoldingModal } from './components/EditHoldingModal'
 import { PortfolioChart } from './components/PortfolioChart'
 import { AlertsPanel } from './components/AlertsPanel'
 import { PerformanceSummary } from './components/PerformanceSummary'
+import { MarketOverview } from './components/MarketOverview'
 import { usePortfolio } from './hooks/usePortfolio'
 import { usePrices } from './hooks/usePrices'
 import { useHistory } from './hooks/useHistory'
 import { useAlerts } from './hooks/useAlerts'
+import { useMarket } from './hooks/useMarket'
 import type { Holding } from './types'
 
-type Tab = 'overview' | 'chart' | 'alerts'
+type Tab = 'overview' | 'chart' | 'alerts' | 'market'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('overview')
@@ -22,6 +24,7 @@ export default function App() {
   const { prices, loading, lastUpdated, refresh } = usePrices(holdings)
   const { history, addSnapshot } = useHistory()
   const { alerts, addAlert, toggleAlert, removeAlert, checkAlerts, requestPermission } = useAlerts()
+  const { coins: marketCoins, loading: marketLoading, lastUpdated: marketUpdated } = useMarket()
 
   useEffect(() => {
     if (Object.keys(prices).length > 0) {
@@ -42,6 +45,7 @@ export default function App() {
     { key: 'overview', label: 'Overview' },
     { key: 'chart', label: 'Chart' },
     { key: 'alerts', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
+    { key: 'market', label: 'Market' },
   ]
 
   return (
@@ -85,6 +89,14 @@ export default function App() {
             </>
           )}
           {tab === 'chart' && <PortfolioChart history={history} />}
+          {tab === 'market' && (
+            <MarketOverview
+              coins={marketCoins}
+              holdings={holdings}
+              loading={marketLoading}
+              lastUpdated={marketUpdated}
+            />
+          )}
           {tab === 'alerts' && (
             <AlertsPanel
               alerts={alerts}
