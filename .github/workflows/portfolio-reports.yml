@@ -50,6 +50,16 @@ jobs:
       - name: Generate report
         run: node scripts/generate-report.mjs ${{ steps.type.outputs.type }}
 
+      - name: Send Telegram digest
+        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\":\"${TELEGRAM_CHAT_ID}\",\"text\":$(jq -Rs . < reports/telegram_message.txt),\"parse_mode\":\"Markdown\"}"
+
       - name: Commit report
         run: |
           git config user.name  "github-actions[bot]"

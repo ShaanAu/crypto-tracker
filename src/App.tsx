@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { PortfolioHeader } from './components/PortfolioHeader'
 import { HoldingsTable } from './components/HoldingsTable'
 import { EditHoldingModal } from './components/EditHoldingModal'
+import { CostBasisModal } from './components/CostBasisModal'
 import { PortfolioChart } from './components/PortfolioChart'
 import { AlertsPanel } from './components/AlertsPanel'
 import { PerformanceSummary } from './components/PerformanceSummary'
@@ -19,8 +20,9 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('overview')
   const [editTarget, setEditTarget] = useState<Holding | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [costBasisOpen, setCostBasisOpen] = useState(false)
 
-  const { holdings, ready, addHolding, updateHolding, removeHolding } = usePortfolio()
+  const { holdings, ready, addHolding, updateHolding, removeHolding, bulkUpdateHoldings } = usePortfolio()
   const { prices, loading, error: priceError, lastUpdated, refresh } = usePrices(holdings)
   const { history, addSnapshot } = useHistory()
   const { alerts, addAlert, toggleAlert, removeAlert, checkAlerts, requestPermission } = useAlerts()
@@ -86,6 +88,14 @@ export default function App() {
           {tab === 'overview' && (
             <>
               <PerformanceSummary holdings={holdings} prices={prices} history={history} />
+              <div className="flex justify-end px-4 pb-1">
+                <button
+                  onClick={() => setCostBasisOpen(true)}
+                  className="text-xs text-gray-500 hover:text-blue-400 transition-colors"
+                >
+                  Set cost basis
+                </button>
+              </div>
               <HoldingsTable
                 holdings={holdings}
                 prices={prices}
@@ -122,6 +132,16 @@ export default function App() {
       )}
       {editTarget && (
         <EditHoldingModal holding={editTarget} onSave={async h => { await updateHolding(h.id, { amount: h.amount, costBasisUsd: h.costBasisUsd }); setEditTarget(null) }} onClose={() => setEditTarget(null)} />
+      )}
+      {costBasisOpen && (
+        <CostBasisModal
+          holdings={holdings}
+          onSave={updates => {
+            bulkUpdateHoldings(updates.map(u => ({ id: u.id, changes: { costBasisUsd: u.costBasisUsd } })))
+            setCostBasisOpen(false)
+          }}
+          onClose={() => setCostBasisOpen(false)}
+        />
       )}
     </div>
   )

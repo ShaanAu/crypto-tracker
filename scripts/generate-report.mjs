@@ -353,9 +353,37 @@ ${enriched.map(h => {
 _Prices and sentiment from CoinGecko. Fear & Greed from Alternative.me. Portfolio data from [ShaanAu/crypto-tracker](https://github.com/ShaanAu/crypto-tracker)._
 `
 
-// ── Write file ────────────────────────────────────────────────────────────────
+// ── Write files ───────────────────────────────────────────────────────────────
 
 const outPath = join(ROOT, filenames[type])
 mkdirSync(dirname(outPath), { recursive: true })
 writeFileSync(outPath, md)
 console.log(`Written: ${filenames[type]}`)
+
+// Telegram digest (written to disk; workflow sends it via curl, not committed)
+const fgNum = fgToday?.value ?? '?'
+const changeDir = change24hUsd >= 0 ? '▲' : '▼'
+const buyCount = enriched.filter(h => h.sig.signal.includes('Buy')).length
+const topMover = topPerformers[0]
+const worstMover = worstPerformers[0]
+const repoBase = 'https://github.com/ShaanAu/crypto-tracker/blob/main'
+
+const telegramLines = [
+  `📊 *${titles[type]}*`,
+  '',
+  `💰 Portfolio: *${usd(totalValue)}*`,
+  `24h: ${changeDir} ${usd(Math.abs(change24hUsd))} (${pct(change24hPct)})`,
+  snap7d ? `7d:  ${change7dUsd >= 0 ? '▲' : '▼'} ${usd(Math.abs(change7dUsd))} (${pct(change7dPct)})` : null,
+  hasCostBasis ? `P&L: ${totalPnl >= 0 ? '▲' : '▼'} ${usd(Math.abs(totalPnl))}` : null,
+  '',
+  `🔥 Top: ${topMover.symbol} ${pct(topMover.change24h)}`,
+  `📉 Worst: ${worstMover.symbol} ${pct(worstMover.change24h)}`,
+  `🧠 Fear & Greed: ${fgNum} — ${fgLabel(fgNum)}`,
+  `🟢 Buy signals: ${buyCount}/${enriched.length} coins`,
+  '',
+  `📄 ${repoBase}/${filenames[type]}`,
+].filter(l => l !== null).join('\n')
+
+mkdirSync(join(ROOT, 'reports'), { recursive: true })
+writeFileSync(join(ROOT, 'reports/telegram_message.txt'), telegramLines)
+console.log('Written: reports/telegram_message.txt')

@@ -47,5 +47,16 @@ export function usePortfolio() {
     })
   }, [persist])
 
-  return { holdings, ready, addHolding, updateHolding, removeHolding }
+  const bulkUpdateHoldings = useCallback((updates: { id: string; changes: Partial<Holding> }[]) => {
+    setHoldings(prev => {
+      const next = prev.map(h => {
+        const upd = updates.find(u => u.id === h.id)
+        return upd ? { ...h, ...upd.changes } : h
+      })
+      persist(next, 'update cost basis')
+      return next
+    })
+  }, [persist])
+
+  return { holdings, ready, addHolding, updateHolding, removeHolding, bulkUpdateHoldings }
 }

@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 .env
 .env.local
+reports/telegram_message.txt

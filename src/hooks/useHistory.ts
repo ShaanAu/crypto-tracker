@@ -3,7 +3,7 @@ import type { HistorySnapshot, PriceMap, Holding } from '../types'
 import { getFile, putFile } from '../lib/github'
 
 const PATH = 'data/history.json'
-const WRITE_INTERVAL_MS = 30 * 60 * 1000 // write to GitHub at most every 30 min
+const WRITE_INTERVAL_MS = 6 * 60 * 60 * 1000 // write to GitHub at most every 6 hours
 
 export function useHistory() {
   const [history, setHistory] = useState<HistorySnapshot[]>([])
