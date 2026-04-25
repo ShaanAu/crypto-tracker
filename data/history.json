@@ -490,5 +490,33 @@
   {
     "timestamp": 1777111601382,
     "totalValueUsd": 51808.29935807
+  },
+  {
+    "timestamp": 1777115261433,
+    "totalValueUsd": 51716.41307558001
+  },
+  {
+    "timestamp": 1777118580736,
+    "totalValueUsd": 51469.32652568001
+  },
+  {
+    "timestamp": 1777118935028,
+    "totalValueUsd": 51461.88339979
+  },
+  {
+    "timestamp": 1777122594636,
+    "totalValueUsd": 51483.76787853001
+  },
+  {
+    "timestamp": 1777126252146,
+    "totalValueUsd": 51531.368368170006
+  },
+  {
+    "timestamp": 1777129910160,
+    "totalValueUsd": 51518.75185287
+  },
+  {
+    "timestamp": 1777133567255,
+    "totalValueUsd": 51374.973433010004
   }
 ]
